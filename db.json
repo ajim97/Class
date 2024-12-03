@@ -1,88 +1,57 @@
 {
-  "user": [
+  "movies": [
     {
-      "name": "new south indian hindi dubbed movie 2025",
-      "age": "16",
-      "id": "7e8f"
+      "id": "1",
+      "name": "Inception",
+      "age": "13+",
+      "description": "A mind-bending thriller by Christopher Nolan.",
+      "image": "https://example.com/images/inception.jpg"
     },
     {
-      "name": "new sikindar movie 2025",
-      "age": "16",
-      "id": "be7a"
-    },
-    {
-      "name": "Agar tum sath ho tere najaro me hai ",
-      "age": "16",
-      "description": "the super Mp3 Song",
-      "id": "0eb0"
-    },
-    {
-      "name": "Agar tum sath ho tere najaro me hai ",
-      "age": "16",
-      "description": "the super Mp3 Song",
-      "id": "6fd1"
-    },
-    {
-      "id": "8f57",
-      "name": "pushpa 2 new south indian Hindi Dubbed Movie 2025",
-      "age": "16",
-      "description": "the super Movie"
-    },
-    {
-      "id": "8f57",
-      "name": "pushpa 5 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
-    },
-    {
-      "id": "8f57",
-      "name": "pushpa 8 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
-    },
-    {
-      "id": "8f57",
-      "name": "pushpa 10 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
+      "id": "2",
+      "name": "Interstellar",
+      "age": "13+",
+      "description": "A sci-fi masterpiece exploring time and space.",
+      "image": "https://example.com/images/interstellar.jpg"
     },
     {
       "id": "3",
-      "name": "pushpa 11 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
+      "name": "The Dark Knight",
+      "age": "13+",
+      "description": "A gritty tale of Gotham's vigilante hero.",
+      "image": "https://example.com/images/darkknight.jpg"
     },
     {
-      "id": "8f57",
-      "name": "pushpa 13 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
+      "id": 5,
+      "name": "Hello world welcome to my New App ",
+      "age": "13+",
+      "description": "A mind-bending thriller by Christopher Nolan.",
+      "image": "https://example.com/images/inception.jpg",
+      "downloadLink": "https://www.youtube.com/watch?v=LjorTavEJhs&list=RDIDoNTUoMFLc&index=4"
     },
     {
-      "id": "8f57",
-      "name": "pushpa 14 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
+      "id": 6,
+      "name": "Hello world welcome to my website And New App ",
+      "age": "13+",
+      "description": "A mind-bending thriller by Christopher Nolan.",
+      "image": "https://example.com/images/inception.jpg",
+      "downloadLink": "https://www.youtube.com/watch?v=LjorTavEJhs&list=RDIDoNTUoMFLc&index=4"
     },
     {
-      "id": "8f57",
-      "name": "pushpa 15 new hindi movie",
-      "age": "16",
-      "description": "the super Movie"
+      "id": 8,
+      "name": "Hello world welcome to my website And New App and dbjbjb ",
+      "age": "13+",
+      "description": "A mind-bending thriller by Christopher Nolan.",
+      "image": "https://example.com/images/inception.jpg",
+      "downloadLink": "https://drive.google.com/file/d/1iicYCvKRB3OoNq3k6DfHV9Ex6JjxPWSI/view?usp=drive_link"
     },
     {
-      "id": "8f57",
-      "name": "pushpa 15 new hindi movie",
-      "age": "16",
-      "description": "the super Movie",
-      "image": "https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D"
-    },
-    {
-      "id": "8f57",
-      "name": "New sikindar Movie ",
-      "age": "16",
-      "description": "the super Movie",
-      "image": "https://m.media-amazon.com/images/M/MV5BMWIyNjJmNTEtN2NiMC00NDg0LTkyY2ItMTI2ODZkYmM0ZmE3XkEyXkFqcGc@._V1_.jpg"
+      "id": 7,
+      "name": "Hello world welcome to my website And New App akaram ",
+      "age": "13+",
+      "description": "A mind-bending thriller by Christopher Nolan.",
+      "image": "https://example.com/images/inception.jpg",
+      "downloadLink": "https://drive.google.com/uc?export=download&id=1iicYCvKRB3OoNq3k6DfHV9Ex6JjxPWSI"
     }
   ]
 }
