@@ -1,6 +1,15 @@
  {
       "movies": [
-     
+     {
+    "user": "aodask",
+    "text": "yfuyfu",
+    "profileImage": "https://firebasestorage.googleapis.com/v0/b/valute3.appspot.com/o/profile_images%2F9fdfb26f-8026-4420-8af5-fcc7a8a19ead.jpg?alt=media&token=cceb2a68-0a12-4006-b386-e99ab22434d2",
+    "mediaUrl": null,
+    "mediaThumbnail": null,
+    "mediaType": "image",
+    "replyTo": null,
+    "id": 1
+  }
        
       ]
     }
