@@ -13,17 +13,20 @@ const io = new Server(server, {
         methods: ['GET', 'POST'],
     },
 });
-  
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB connected'))
     .catch((err) => console.error('MongoDB connection error:', err));
 
-console.log('MongoDB URI:', process.env.MONGO_URI);
-
+// Root Route
+app.get('/', (req, res) => {
+    res.send('Welcome to the Chat App API!');
+});
 
 // Socket.IO Logic
 io.on('connection', (socket) => {
@@ -35,7 +38,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('A user disconnected:', socket.id);
-    });  
+    });
 });
 
 // Start Server
