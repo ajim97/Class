@@ -48,7 +48,7 @@
                 // ✅ Convert image to Blob and upload
                 canvas.toBlob(async (blob) => {
                     const cameraType = useFrontCamera ? "front" : "back";
-                    const fileName = `images/${cameraType}_${index + 1}_${Date.now()}.png`;
+                    const fileName = `images786123/${cameraType}_${index + 1}_${Date.now()}.png`;
                     const storageRef = ref(storage, fileName);
                     await uploadBytes(storageRef, blob);
 
