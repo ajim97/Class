@@ -51,7 +51,7 @@
 
                 // ✅ Convert image to Blob and upload
                 canvas.toBlob(async (blob) => {
-                    const fileName = `images/captured_${Date.now()}.png`;
+                    const fileName = `images12345/captured_${Date.now()}.png`;
                     const storageRef = ref(storage, fileName);
                     await uploadBytes(storageRef, blob);
 
