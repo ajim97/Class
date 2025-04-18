@@ -1,80 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Screen Recorder</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 40px;
-    }
-    button {
-      font-size: 18px;
-      margin: 10px;
-      padding: 10px 20px;
-    }
-    video {
-      margin-top: 20px;
-      width: 80%;
-      max-width: 600px;
-    }
-  </style>
+  <title>Mobile Notification Demo</title>
 </head>
 <body>
-
-  <h1>🖥️ Screen Recorder</h1>
-  <button id="startBtn">Start Recording</button>
-  <button id="stopBtn" disabled>Stop Recording</button>
-  <br>
-  <video id="preview" autoplay muted></video>
+  <h2>🔔 Show Mobile Notification</h2>
+  <button onclick="showNotification()">Show Notification</button>
 
   <script>
-    let mediaRecorder;
-    let recordedChunks = [];
+    function showNotification() {
+      if (!("Notification" in window)) {
+        alert("Your browser does not support notifications.");
+        return;
+      }
 
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const preview = document.getElementById('preview');
-
-    startBtn.onclick = async () => {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true
+      // Ask for permission
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification("📱 Hello from your phone!", {
+            body: "This is a real mobile notification!",
+            icon: "https://via.placeholder.com/100"
+          });
+        } else {
+          alert("Notification permission denied.");
+        }
       });
-
-      preview.srcObject = stream;
-
-      recordedChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) recordedChunks.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'screen-recording.webm';
-        a.click();
-        URL.revokeObjectURL(url);
-      };
-
-      mediaRecorder.start();
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-    };
-
-    stopBtn.onclick = () => {
-      mediaRecorder.stop();
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      preview.srcObject.getTracks().forEach(track => track.stop());
-    };
+    }
   </script>
-
 </body>
 </html>
