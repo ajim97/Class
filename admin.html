@@ -1,30 +1,34 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
+  <meta charset="utf-8" />
   <title>Admin Panel</title>
 </head>
 <body>
-  <h2>Send Push Notification</h2>
-  <form id="notifyForm">
-    <input type="text" id="title" placeholder="Title" required><br><br>
-    <textarea id="message" placeholder="Message" required></textarea><br><br>
+  <h1>Admin Push Panel</h1>
+  <form id="pushForm">
+    <input id="title" placeholder="Title" required><br><br>
+    <input id="body" placeholder="Message" required><br><br>
+    <input id="url" placeholder="Click URL" value="/"><br><br>
     <button type="submit">Send Notification</button>
   </form>
+  <p id="status"></p>
 
   <script>
-    document.getElementById("notifyForm").addEventListener("submit", async (e) => {
+    document.getElementById("pushForm").onsubmit = async (e) => {
       e.preventDefault();
       const title = document.getElementById("title").value;
-      const message = document.getElementById("message").value;
+      const body = document.getElementById("body").value;
+      const url = document.getElementById("url").value;
 
-      await fetch("/sendNotification", {
+      const res = await fetch("/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, message })
+        body: JSON.stringify({ title, body, url })
       });
-
-      alert("Notification Sent!");
-    });
+      const data = await res.json();
+      document.getElementById("status").textContent = `✅ Sent: ${data.sent}`;
+    };
   </script>
 </body>
 </html>
