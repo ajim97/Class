@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+</head>
+<body>
+  <h2>Send Push Notification</h2>
+  <form id="notifyForm">
+    <input type="text" id="title" placeholder="Title" required><br><br>
+    <textarea id="message" placeholder="Message" required></textarea><br><br>
+    <button type="submit">Send Notification</button>
+  </form>
+
+  <script>
+    document.getElementById("notifyForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const message = document.getElementById("message").value;
+
+      await fetch("/sendNotification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, message })
+      });
+
+      alert("Notification Sent!");
+    });
+  </script>
+</body>
+</html>
