@@ -2,15 +2,23 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Redirecting...</title>
+  <title>Payment Success Redirect</title>
+
   <script>
-    window.onload = function () {
-      const query = window.location.search;
-      window.location.href = "myapp://payment-success" + query;
-    };
+    // Extract data from URL
+    const query = window.location.search;  // ?data=xyz...
+
+    // Your React Native redirect URL (must match your onNavigationStateChange filter)
+    const APP_SUCCESS_URL = "https://yourusername.github.io/esewa-redirect/success.html";
+
+    // Redirect back to your RN WebView with same query params
+    const redirectURL = APP_SUCCESS_URL + query;
+
+    // Redirect instantly
+    window.location.replace(redirectURL);
   </script>
 </head>
 <body>
-  <h3>Processing Payment...</h3>
+  <p>Redirecting...</p>
 </body>
 </html>
