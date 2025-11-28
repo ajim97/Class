@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Redirecting...</title>
+  <script>
+    window.onload = function () {
+      const query = window.location.search;
+      window.location.href = "myapp://payment-success" + query;
+    };
+  </script>
+</head>
+<body>
+  <h3>Processing Payment...</h3>
+</body>
+</html>
