@@ -5,21 +5,12 @@
   <title>Payment Success Redirect</title>
 
   <script>
-    // Extract data from URL
-    const query = window.location.search;  // ?data=xyz...
-
-    // Your React Native redirect URL (must match your onNavigationStateChange filter)
-    const APP_SUCCESS_URL = "https://ajim97.github.io/Class/success";
-
-    // Redirect back to your RN WebView with same query params
-    const redirectURL = APP_SUCCESS_URL + query;
-
-    // Redirect instantly
-    window.location.replace(redirectURL);
+    const query = window.location.search;
+    const APP_SUCCESS_URL = "https://ajim97.github.io/Class/success.html";
+    window.location.replace(APP_SUCCESS_URL + query);
   </script>
 </head>
 <body>
   <p>Redirecting...</p>
 </body>
 </html>
-
