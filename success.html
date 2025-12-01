@@ -2,15 +2,26 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Payment Success Redirect</title>
+  <title>Payment Success</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+  
+  <h2>Processing your payment...</h2>
+  <p>Please wait while we confirm your transaction.</p>
 
   <script>
-    const query = window.location.search;
-    const APP_SUCCESS_URL = "https://ajim97.github.io/Class/success.html";
-    window.location.replace(APP_SUCCESS_URL + query);
+    // IMPORTANT:
+    // No redirect needed.
+    //
+    // eSewa will send user to:
+    // https://ajim97.github.io/Class/success.html?data=XXXXX
+    //
+    // Your React Native WebView will intercept this URL,
+    // extract ?data=..., then navigate to PaymentSuccess screen.
+    //
+    // This page only needs to exist and load without errors.
   </script>
-</head>
-<body>
-  <p>Redirecting...</p>
+
 </body>
 </html>
